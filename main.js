@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Evolve tooltips
 // @namespace    http://tampermonkey.net/
-// @version      1
-// @downloadURL  https://gist.github.com/elias098/cc891c9c4bdc6276a8dfa4d346d92c30/raw/evolve_automation.user.js
+// @version      1.0
+// @downloadURL  https://github.com/elias098/evolve-tooltips/raw/main/main.js
 // @match        https://pmotschmann.github.io/Evolve/
 // @grant        none
 // ==/UserScript==

@@ -1,6 +1,8 @@
 // ==UserScript==
 // @name         Evolve tooltips
 // @namespace    http://tampermonkey.net/
+// @description  try to take over the world!
+// @author       Elias
 // @version      1.0
 // @downloadURL  https://github.com/elias098/evolve-tooltips/raw/main/main.js
 // @match        https://pmotschmann.github.io/Evolve/

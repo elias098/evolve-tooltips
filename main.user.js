@@ -4,7 +4,7 @@
 // @description  try to take over the world!
 // @author       Elias
 // @version      1.0
-// @downloadURL  https://github.com/elias098/evolve-tooltips/raw/main/main.js
+// @downloadURL  https://github.com/elias098/evolve-tooltips/raw/main/main.user.js
 // @match        https://pmotschmann.github.io/Evolve/
 // @grant        none
 // ==/UserScript==

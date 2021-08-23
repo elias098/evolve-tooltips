@@ -1363,6 +1363,11 @@
       return;
     }
 
+    if (typeof unsafeWindow.jQuery == "undefined") {
+      setTimeout(init, 100);
+      return;
+    }
+
     // Init researches
     for (let [key, action] of Object.entries(game.actions.tech)) {
       techIds[action.id] = new Technology(key);

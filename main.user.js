@@ -1363,7 +1363,7 @@
       return;
     }
 
-    if (typeof unsafeWindow.jQuery == "undefined") {
+    if (typeof win.jQuery == "undefined") {
       setTimeout(init, 100);
       return;
     }

@@ -3,7 +3,7 @@
 // @namespace    http://tampermonkey.net/
 // @description  try to take over the world!
 // @author       Elias
-// @version      1.0.1
+// @version      1.0.2
 // @downloadURL  https://github.com/elias098/evolve-tooltips/raw/main/main.user.js
 // @match        https://pmotschmann.github.io/Evolve/
 // @grant        none
@@ -1302,6 +1302,7 @@
 }
   
   // We'll need real window to access vue objects
+  let win;
   if (typeof unsafeWindow !== "undefined") {
     win = unsafeWindow;
   } else {

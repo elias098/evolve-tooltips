@@ -3,25 +3,25 @@
 // @namespace    http://tampermonkey.net/
 // @description  try to take over the world!
 // @author       Elias
-// @version      1.0.2
+// @version      1.0.3
 // @downloadURL  https://github.com/elias098/evolve-tooltips/raw/main/main.user.js
 // @match        https://pmotschmann.github.io/Evolve/
 // @grant        none
 // ==/UserScript==
 
-(function() {
-  'use strict';
+(function () {
+  "use strict";
 
   class Technology {
     constructor(id) {
       this._id = id;
       this._vueBinding = "tech-" + id;
     }
-  
+
     get id() {
       return this._id;
     }
-  
+
     isUnlocked() {
       // vue of researched techs still can be found in #oldTech
       return (
@@ -29,26 +29,26 @@
         getVueById(this._vueBinding) !== undefined
       );
     }
-  
+
     get definition() {
       return game.actions.tech[this._id];
     }
-  
+
     get title() {
       return typeof this.definition.title === "function"
         ? this.definition.title()
         : this.definition.title;
     }
-  
+
     get name() {
       return this.title;
     }
-  
+
     isResearched() {
       return document.querySelector("#tech-" + this.id + " .oldTech") !== null;
     }
   }
-  
+
   class Action {
     constructor(name, tab, id, location, flags) {
       this.name = name;
@@ -56,10 +56,10 @@
       this._id = id;
       this._location = location;
       this.gameMax = Number.MAX_SAFE_INTEGER;
-  
+
       this._vueBinding = this._tab + "-" + this.id;
     }
-  
+
     get definition() {
       if (this._location !== "") {
         return game.actions[this._tab][this._location][this._id];
@@ -67,15 +67,15 @@
         return game.actions[this._tab][this._id];
       }
     }
-  
+
     get instance() {
       return game.global[this._tab][this._id];
     }
-  
+
     get id() {
       return this._id;
     }
-  
+
     get title() {
       let def = this.definition;
       return def
@@ -84,7 +84,7 @@
           : def.title
         : this.name;
     }
-  
+
     get desc() {
       let def = this.definition;
       return def
@@ -93,30 +93,30 @@
           : def.desc
         : this.name;
     }
-  
+
     get vue() {
       return getVueById(this._vueBinding);
     }
-  
+
     isUnlocked() {
       return document.getElementById(this._vueBinding) !== null;
     }
-  
+
     isSwitchable() {
       return (
         this.definition.hasOwnProperty("powered") ||
         this.definition.hasOwnProperty("switchable")
       );
     }
-  
+
     isMission() {
       return this.definition.hasOwnProperty("grant");
     }
-  
+
     isComplete() {
       return haveTech(this.definition.grant[0], this.definition.grant[1]);
     }
-  
+
     // export function checkPowerRequirements(c_action) from actions.js
     checkPowerRequirements(def) {
       for (let [tech, value] of Object.entries(
@@ -128,35 +128,35 @@
       }
       return true;
     }
-  
+
     get powered() {
       if (this.overridePowered !== undefined) {
         return this.overridePowered;
       }
-  
+
       if (
         !this.definition.hasOwnProperty("powered") ||
         !this.checkPowerRequirements()
       ) {
         return 0;
       }
-  
+
       return this.definition.powered();
     }
-  
+
     get count() {
       if (!this.isUnlocked()) {
         return 0;
       }
-  
+
       return this.instance?.count ?? 0;
     }
-  
+
     hasState() {
       if (!this.isUnlocked()) {
         return false;
       }
-  
+
       return (
         (this.definition.powered &&
           haveTech("high_tech", 2) &&
@@ -165,35 +165,35 @@
         false
       );
     }
-  
+
     get stateOnCount() {
       if (!this.hasState() || this.count < 1) {
         return 0;
       }
-  
+
       return this.instance.on;
     }
-  
+
     get stateOffCount() {
       if (!this.hasState() || this.count < 1) {
         return 0;
       }
-  
+
       return this.instance.count - this.instance.on;
     }
   }
-  
+
   class Project extends Action {
     constructor(name, id) {
       super(name, "arpa", id, "");
       this._vueBinding = "arpa" + this.id;
       this.currentStep = 1;
     }
-  
+
     get count() {
       return this.instance?.rank ?? 0;
     }
-  
+
     get progress() {
       return this.instance?.complete ?? 0;
     }
@@ -201,45 +201,45 @@
 
   class Job {
     constructor(id, name) {
-        // Private properties
-        this._originalId = id;
-        this._originalName = name;
-        this._vueBinding = "civ-" + this._originalId;
+      // Private properties
+      this._originalId = id;
+      this._originalName = name;
+      this._vueBinding = "civ-" + this._originalId;
     }
 
     get definition() {
-        return game.global.civic[this._originalId];
+      return game.global.civic[this._originalId];
     }
 
     get id() {
-        return this.definition.job;
+      return this.definition.job;
     }
 
     get name() {
-        return this.definition.name;
+      return this.definition.name;
     }
 
     isUnlocked() {
-        return this.definition.display;
+      return this.definition.display;
     }
 
     get count() {
-        return this.definition.workers;
+      return this.definition.workers;
     }
 
     get max() {
-        if (this.definition.max === -1) {
-            return Number.MAX_SAFE_INTEGER;
-        }
+      if (this.definition.max === -1) {
+        return Number.MAX_SAFE_INTEGER;
+      }
 
-        return this.definition.max;
+      return this.definition.max;
     }
 
     isDefault() {
-        return game.global.civic.d_job === this.id;
+      return game.global.civic.d_job === this.id;
     }
-}
-  
+  }
+
   let buildings = {
     Food: new Action("Food", "city", "food", ""),
     Lumber: new Action("Lumber", "city", "lumber", ""),
@@ -251,8 +251,13 @@
       garrison: true,
     }),
     SacrificialAltar: new Action("Sacrificial Altar", "city", "s_alter", ""),
-    MeditationChamber: new Action("Meditation Chamber", "city", "meditation", ""),
-  
+    MeditationChamber: new Action(
+      "Meditation Chamber",
+      "city",
+      "meditation",
+      ""
+    ),
+
     University: new Action("University", "city", "university", "", {
       knowledge: true,
     }),
@@ -319,7 +324,7 @@
     Shrine: new Action("Shrine", "city", "shrine", ""),
     CompostHeap: new Action("Compost Heap", "city", "compost", ""),
     Pylon: new Action("Pylon", "city", "pylon", ""),
-  
+
     SpaceTestLaunch: new Action(
       "Space Test Launch",
       "space",
@@ -346,8 +351,13 @@
       "nav_beacon",
       "spc_home"
     ),
-  
-    MoonMission: new Action("Moon Mission", "space", "moon_mission", "spc_moon"),
+
+    MoonMission: new Action(
+      "Moon Mission",
+      "space",
+      "moon_mission",
+      "spc_moon"
+    ),
     MoonBase: new Action("Moon Base", "space", "moon_base", "spc_moon"),
     MoonIridiumMine: new Action(
       "Moon Iridium Mine",
@@ -368,7 +378,7 @@
       "spc_moon",
       { knowledge: true }
     ),
-  
+
     RedMission: new Action("Red Mission", "space", "red_mission", "spc_red"),
     RedSpaceport: new Action("Red Spaceport", "space", "spaceport", "spc_red"),
     RedTower: new Action("Red Space Control", "space", "red_tower", "spc_red"),
@@ -412,8 +422,13 @@
       "spc_red",
       { housing: true, garrison: true }
     ),
-  
-    HellMission: new Action("Hell Mission", "space", "hell_mission", "spc_hell"),
+
+    HellMission: new Action(
+      "Hell Mission",
+      "space",
+      "hell_mission",
+      "spc_hell"
+    ),
     HellGeothermal: new Action(
       "Hell Geothermal Plant",
       "space",
@@ -432,7 +447,7 @@
       "swarm_plant",
       "spc_hell"
     ),
-  
+
     SunMission: new Action("Sun Mission", "space", "sun_mission", "spc_sun"),
     SunSwarmControl: new Action(
       "Sun Control Station",
@@ -446,7 +461,7 @@
       "swarm_satellite",
       "spc_sun"
     ),
-  
+
     GasMission: new Action("Gas Mission", "space", "gas_mission", "spc_gas"),
     GasMining: new Action(
       "Gas Helium-3 Collector",
@@ -456,7 +471,7 @@
       { smart: true }
     ),
     GasStorage: new Action("Gas Fuel Depot", "space", "gas_storage", "spc_gas"),
-  
+
     GasMoonMission: new Action(
       "Gas Moon Mission",
       "space",
@@ -482,8 +497,13 @@
       "spc_gas_moon",
       { smart: true }
     ),
-  
-    BeltMission: new Action("Belt Mission", "space", "belt_mission", "spc_belt"),
+
+    BeltMission: new Action(
+      "Belt Mission",
+      "space",
+      "belt_mission",
+      "spc_belt"
+    ),
     BeltSpaceStation: new Action(
       "Belt Space Station",
       "space",
@@ -512,7 +532,7 @@
       "spc_belt",
       { smart: true }
     ),
-  
+
     DwarfMission: new Action(
       "Dwarf Mission",
       "space",
@@ -545,14 +565,14 @@
       "spc_dwarf",
       { knowledge: true }
     ),
-  
+
     /*
           DwarfShipyard: new Action("Dwarf Ship Yard", "space", "shipyard", "spc_dwarf"),
           TitanMission: new Action("Titan Mission", "space", "titan_mission", "spc_titan"),
           TitanSpaceport: new Action("Titan Spaceport", "space", "titan_spaceport", "spc_titan"),
           EnceladusMission: new Action("Enceladus Mission", "space", "enceladus_mission", "spc_enceladus"),
           */
-  
+
     AlphaMission: new Action(
       "Alpha Centauri Mission",
       "interstellar",
@@ -634,7 +654,7 @@
       "zoo",
       "int_alpha"
     ),
-  
+
     ProximaMission: new Action(
       "Proxima Mission",
       "interstellar",
@@ -678,7 +698,7 @@
       "orichalcum_sphere",
       "int_proxima"
     ),
-  
+
     NebulaMission: new Action(
       "Nebula Mission",
       "interstellar",
@@ -703,7 +723,7 @@
       "elerium_prospector",
       "int_nebula"
     ),
-  
+
     NeutronMission: new Action(
       "Neutron Mission",
       "interstellar",
@@ -728,7 +748,7 @@
       "stellar_forge",
       "int_neutron"
     ),
-  
+
     Blackhole: new Action(
       "Blackhole Mission",
       "interstellar",
@@ -754,7 +774,7 @@
       "mass_ejector",
       "int_blackhole"
     ),
-  
+
     BlackholeJumpShip: new Action(
       "Blackhole Jump Ship",
       "interstellar",
@@ -779,7 +799,7 @@
       "s_gate",
       "int_blackhole"
     ),
-  
+
     SiriusMission: new Action(
       "Sirius Mission",
       "interstellar",
@@ -829,7 +849,7 @@
       "thermal_collector",
       "int_sirius"
     ),
-  
+
     GatewayMission: new Action(
       "Gateway Mission",
       "galaxy",
@@ -849,7 +869,7 @@
       "ship_dock",
       "gxy_gateway"
     ),
-  
+
     BologniumShip: new Action(
       "Gateway Bolognium Ship",
       "galaxy",
@@ -892,7 +912,7 @@
       "gxy_gateway",
       { ship: true }
     ),
-  
+
     StargateStation: new Action(
       "Stargate Station",
       "galaxy",
@@ -919,7 +939,7 @@
       "defense_platform",
       "gxy_stargate"
     ),
-  
+
     GorddonMission: new Action(
       "Gorddon Mission",
       "galaxy",
@@ -954,7 +974,7 @@
       "gxy_gorddon",
       { ship: true }
     ),
-  
+
     Alien1Consulate: new Action(
       "Alien 1 Consulate",
       "galaxy",
@@ -962,7 +982,12 @@
       "gxy_alien1",
       { housing: true }
     ),
-    Alien1Resort: new Action("Alien 1 Resort", "galaxy", "resort", "gxy_alien1"),
+    Alien1Resort: new Action(
+      "Alien 1 Resort",
+      "galaxy",
+      "resort",
+      "gxy_alien1"
+    ),
     Alien1VitreloyPlant: new Action(
       "Alien 1 Vitreloy Plant",
       "galaxy",
@@ -977,7 +1002,7 @@
       "gxy_alien1",
       { ship: true }
     ),
-  
+
     Alien2Mission: new Action(
       "Alien 2 Mission",
       "galaxy",
@@ -1010,7 +1035,7 @@
       "gxy_alien2",
       { knowledge: true, ship: true }
     ),
-  
+
     ChthonianMission: new Action(
       "Chthonian Mission",
       "galaxy",
@@ -1038,7 +1063,7 @@
       "gxy_chthonian",
       { ship: true, smart: true }
     ),
-  
+
     PortalTurret: new Action(
       "Portal Laser Turret",
       "portal",
@@ -1063,7 +1088,7 @@
       "repair_droid",
       "prtl_fortress"
     ),
-  
+
     BadlandsPredatorDrone: new Action(
       "Badlands Predator Drone",
       "portal",
@@ -1083,7 +1108,7 @@
       "prtl_badlands",
       { smart: true }
     ),
-  
+
     PitMission: new Action("Pit Mission", "portal", "pit_mission", "prtl_pit"),
     PitAssaultForge: new Action(
       "Pit Assault Forge",
@@ -1109,7 +1134,7 @@
       "soul_attractor",
       "prtl_pit"
     ),
-  
+
     RuinsMission: new Action(
       "Ruins Mission",
       "portal",
@@ -1154,7 +1179,7 @@
       "ancient_pillars",
       "prtl_ruins"
     ),
-  
+
     GateMission: new Action(
       "Gate Mission",
       "portal",
@@ -1180,7 +1205,7 @@
       "infernite_mine",
       "prtl_gate"
     ),
-  
+
     LakeMission: new Action(
       "Lake Mission",
       "portal",
@@ -1211,7 +1236,7 @@
       "prtl_lake",
       { smart: true }
     ),
-  
+
     SpireMission: new Action(
       "Spire Mission",
       "portal",
@@ -1265,7 +1290,7 @@
       { smart: true }
     ),
   };
-  
+
   let projects = {
     LaunchFacility: new Project("Launch Facility", "launch_facility"),
     SuperCollider: new Project("Supercollider", "lhc"),
@@ -1299,52 +1324,76 @@
     SpaceMiner: new Job("space_miner", "Space Miner"),
     HellSurveyor: new Job("hell_surveyor", "Hell Surveyor"),
     Archaeologist: new Job("archaeologist", "Archaeologist"),
-}
-  
+  };
+
   // We'll need real window to access vue objects
   let win;
-  if (typeof unsafeWindow !== "undefined") {
-    win = unsafeWindow;
-  } else {
-    win = window;
-  }
-  const game = win.evolve;
-  game.updateDebugData();
-  
+  let game;
+
   let techIds = {};
   let buildingIds = {};
   let arpaIds = {};
-  
-  // Init researches
-  for (let [key, action] of Object.entries(game.actions.tech)) {
-    techIds[action.id] = new Technology(key);
+
+  let warnDebug = true;
+
+  $().ready(init);
+
+  function init() {
+    if (typeof unsafeWindow !== "undefined") {
+      win = unsafeWindow;
+    } else {
+      win = window;
+    }
+    game = win.evolve;
+
+    // Check if game exposing anything
+    if (!game) {
+      if (warnDebug) {
+        warnDebug = false;
+        alert("You need to enable Debug Mode in settings for script to work");
+      }
+      setTimeout(init, 100);
+      return;
+    }
+
+    // Wait until exposed data fully initialized ('p' in fastLoop, 'c' in midLoop)
+    if (!game.global?.race || !game.breakdown.c.Knowledge) {
+      setTimeout(init, 100);
+      return;
+    }
+
+    // Init researches
+    for (let [key, action] of Object.entries(game.actions.tech)) {
+      techIds[action.id] = new Technology(key);
+    }
+
+    // Init lookup table for buildings
+    for (let building of Object.values(buildings)) {
+      buildingIds[building._vueBinding] = building;
+    }
+
+    // ...and projects
+    for (let project of Object.values(projects)) {
+      arpaIds[project._vueBinding] = project;
+    }
+
+    game.updateDebugData();
+    new MutationObserver(addTooltip).observe(document.getElementById("main"), {
+      childList: true,
+    });
   }
-  
-  // Init lookup table for buildings
-  for (let building of Object.values(buildings)) {
-    buildingIds[building._vueBinding] = building;
-  }
-  
-  // ...and projects
-  for (let project of Object.values(projects)) {
-    arpaIds[project._vueBinding] = project;
-  }
-  
-  new MutationObserver(addTooltip).observe(document.getElementById("main"), {
-    childList: true,
-  });
-  
+
   function haveTech(research, level = 1) {
     return game.global.tech[research] && game.global.tech[research] >= level;
   }
-  
+
   function addTooltip(mutations) {
     game.updateDebugData();
     mutations.forEach((mutation) =>
       mutation.addedNodes.forEach((node) => {
         if (node.id === "popper") {
           let dataId = node.dataset.id;
-  
+
           let match = null;
           let obj = null;
           if ((match = dataId.match(/^popArpa([a-z_-]+)\d*$/))) {
@@ -1357,11 +1406,11 @@
             // "[id]" for buildings and researches
             obj = buildingIds[dataId] || techIds[dataId];
           }
-  
+
           if (!obj || (obj instanceof Technology && obj.isResearched())) {
             return;
           }
-  
+
           let description = getTooltipInfo(obj);
           if (description) {
             node.innerHTML += `<div style="border-top: solid .0625rem #999">${description}</div>`;
@@ -1370,19 +1419,19 @@
       })
     );
   }
-  
+
   function getWorldColliderMulti() {
     let boost = 0;
-  
+
     if (buildings.DwarfWorldController.stateOnCount) {
       boost = 0.25;
       boost += buildings.BlackholeFarReach.stateOnCount * 0.01;
       boost += haveTech("science", 19) ? 0.15 : 0;
     }
-  
+
     return 1 + boost;
   }
-  
+
   function wardenLabel() {
     if (game.global.race.universe === "magic") {
       return game.loc("city_wizard_tower_title");
@@ -1392,13 +1441,15 @@
         : game.loc("city_wardenclyffe");
     }
   }
-  
+
   function getCitadelConsumption(amount) {
     return (
-      (30 + (amount - 1) * 2.5) * amount * (game.global.race["emfield"] ? 1.5 : 1)
+      (30 + (amount - 1) * 2.5) *
+      amount *
+      (game.global.race["emfield"] ? 1.5 : 1)
     );
   }
-  
+
   function getTooltipInfo(obj) {
     let notes = [];
     if (obj === buildings.NeutronCitadel) {
@@ -1409,10 +1460,10 @@
         } MW`
       );
     }
-  
+
     if (obj === buildings.University) {
       let gain = 0;
-  
+
       if (buildings.University.count === 0) {
         gain += parseFloat(
           game.actions.city.university
@@ -1424,15 +1475,15 @@
           parseFloat(game.breakdown.c.Knowledge[game.loc("city_university")]) /
           buildings.University.count;
       }
-  
+
       gain *= getWorldColliderMulti();
-  
+
       notes.push(`+${Math.round(gain)} Max Knowledge`);
     }
-  
+
     if (obj === buildings.Library) {
       let gain = 0;
-  
+
       if (buildings.Library.count === 0) {
         gain += parseFloat(
           game.actions.city.library
@@ -1444,7 +1495,7 @@
           parseFloat(game.breakdown.c.Knowledge[game.loc("city_library")]) /
           buildings.Library.count;
       }
-  
+
       if (haveTech("science", 4)) {
         gain +=
           (0.02 *
@@ -1458,15 +1509,15 @@
               ? buildings.BadlandsSensorDrone.stateOnCount * 0.02
               : 0));
       }
-  
+
       gain *= getWorldColliderMulti();
-  
+
       notes.push(`+${Math.round(gain)} Max Knowledge`);
     }
-  
+
     if (obj === buildings.Wardenclyffe) {
       let gain = 0;
-  
+
       if (buildings.Wardenclyffe.count === 0) {
         gain += parseFloat(
           game.actions.city.wardenclyffe
@@ -1478,7 +1529,7 @@
           parseFloat(game.breakdown.c.Knowledge[wardenLabel()]) /
           buildings.Wardenclyffe.count;
       }
-  
+
       if (haveTech("science", 15)) {
         gain +=
           (0.02 *
@@ -1493,15 +1544,15 @@
             )) /
           (1 + buildings.Wardenclyffe.count * 0.02);
       }
-  
+
       gain *= getWorldColliderMulti();
-  
+
       notes.push(`+${Math.round(gain)} Max Knowledge`);
     }
-  
+
     if (obj === buildings.SpaceSatellite) {
       let gain = 0;
-  
+
       if (buildings.SpaceSatellite.count === 0) {
         gain += parseFloat(
           game.actions.space.spc_home.satellite
@@ -1514,19 +1565,19 @@
             game.breakdown.c.Knowledge[game.loc("space_home_satellite_title")]
           ) / buildings.SpaceSatellite.count;
       }
-  
+
       gain +=
         (0.04 * parseFloat(game.breakdown.c.Knowledge[wardenLabel()] ?? 0)) /
         (1 + buildings.SpaceSatellite.count * 0.04);
-  
+
       gain *= getWorldColliderMulti();
-  
+
       notes.push(`+${Math.round(gain)} Max Knowledge`);
     }
-  
+
     if (obj === buildings.MoonObservatory) {
       let gain = 0;
-  
+
       if (buildings.MoonObservatory.stateOnCount === 0) {
         gain += parseFloat(
           game.actions.space.spc_moon.observatory
@@ -1539,7 +1590,7 @@
             game.breakdown.c.Knowledge[game.loc("space_moon_observatory_title")]
           ) / buildings.MoonObservatory.stateOnCount;
       }
-  
+
       gain +=
         (0.05 *
           parseFloat(
@@ -1551,7 +1602,7 @@
           (haveTech("science", 14)
             ? buildings.BadlandsSensorDrone.stateOnCount * 0.02
             : 0));
-  
+
       if (game.global.race["cataclysm"]) {
         gain +=
           (0.25 *
@@ -1560,15 +1611,15 @@
             )) /
           (1 + buildings.MoonObservatory.stateOnCount * 0.25);
       }
-  
+
       gain *= getWorldColliderMulti();
-  
+
       notes.push(`+${Math.round(gain)} Max Knowledge`);
     }
-  
+
     if (obj === buildings.RedExoticLab) {
       let gain = 0;
-  
+
       if (buildings.RedExoticLab.stateOnCount === 0) {
         gain +=
           parseFloat(
@@ -1581,7 +1632,7 @@
           parseFloat(game.breakdown.c.Knowledge[game.loc("tech_exotic_bd")]) /
           buildings.RedExoticLab.stateOnCount;
       }
-  
+
       if (game.global.race["cataclysm"] && haveTech("science", 15)) {
         gain +=
           (0.02 *
@@ -1596,15 +1647,15 @@
             )) /
           (1 + buildings.RedExoticLab.stateOnCount * 0.02);
       }
-  
+
       gain *= getWorldColliderMulti();
-  
+
       notes.push(`+${Math.round(gain)} Max Knowledge`);
     }
-  
+
     if (obj === buildings.AlphaLaboratory) {
       let gain = 0;
-  
+
       if (buildings.AlphaLaboratory.stateOnCount === 0) {
         gain += parseFloat(
           game.actions.interstellar.int_alpha.laboratory
@@ -1623,7 +1674,7 @@
             ]
           ) / buildings.AlphaLaboratory.stateOnCount;
       }
-  
+
       gain +=
         (0.05 *
           parseFloat(
@@ -1639,37 +1690,39 @@
           (haveTech("mass", 2)
             ? buildings.MassDriver.stateOnCount * jobs.Scientist.count * 0.002
             : 0));
-  
+
       gain *= getWorldColliderMulti();
-  
+
       notes.push(`+${Math.round(gain)} Max Knowledge`);
     }
-  
+
     if (obj === buildings.BlackholeFarReach) {
       let gain = 0;
-  
-      gain += (0.01 * resources.Knowledge.maxQuantity) / getWorldColliderMulti();
-  
+
+      gain +=
+        (0.01 * resources.Knowledge.maxQuantity) / getWorldColliderMulti();
+
       notes.push(`+${Math.round(gain)} Max Knowledge`);
     }
-  
+
     if (obj === buildings.StargateTelemetryBeacon) {
       let gain = 0;
-  
+
       let base_val = haveTech("telemetry") ? 1200 : 800;
       if (haveTech("science", 17)) {
         base_val += buildings.ScoutShip.stateOnCount * 25;
       }
-      gain += (buildings.StargateTelemetryBeacon.stateOnCount * 2 + 1) * base_val;
-  
+      gain +=
+        (buildings.StargateTelemetryBeacon.stateOnCount * 2 + 1) * base_val;
+
       gain *= getWorldColliderMulti();
-  
+
       notes.push(`+${Math.round(gain)} Max Knowledge`);
     }
-  
+
     if (obj === buildings.BadlandsSensorDrone && haveTech("science", 14)) {
       let gain = 0;
-  
+
       if (buildings.BadlandsSensorDrone.stateOnCount === 0) {
         gain += parseFloat(
           game.actions.portal.prtl_badlands.sensor_drone
@@ -1682,7 +1735,7 @@
             game.breakdown.c.Knowledge[game.loc("portal_sensor_drone_title")]
           ) / buildings.BadlandsSensorDrone.stateOnCount;
       }
-  
+
       gain +=
         (0.02 *
           parseFloat(
@@ -1692,7 +1745,7 @@
           buildings.Library.count * 0.02 +
           buildings.MoonObservatory.stateOnCount * 0.05 +
           buildings.BadlandsSensorDrone.stateOnCount * 0.02);
-  
+
       if (game.global.race["cataclysm"]) {
         gain +=
           (0.02 *
@@ -1708,15 +1761,14 @@
             )) /
           (1 + buildings.BadlandsSensorDrone.stateOnCount * 0.02);
       }
-  
+
       gain *= getWorldColliderMulti();
-  
+
       notes.push(`+${Math.round(gain)} Max Knowledge`);
     }
-  
+
     // Other tooltips goes here...
-  
+
     return notes.join("<br>");
   }
-  
 })();

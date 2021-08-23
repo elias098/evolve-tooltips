@@ -7,6 +7,7 @@
 // @downloadURL  https://github.com/elias098/evolve-tooltips/raw/main/main.user.js
 // @match        https://pmotschmann.github.io/Evolve/
 // @grant        none
+// @require      https://code.jquery.com/jquery-3.4.1.min.js
 // ==/UserScript==
 
 (function () {

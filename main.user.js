@@ -1308,7 +1308,7 @@
   } else {
     win = window;
   }
-  game = win.evolve;
+  const game = win.evolve;
   game.updateDebugData();
   
   let techIds = {};

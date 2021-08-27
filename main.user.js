@@ -3,7 +3,7 @@
 // @namespace    http://tampermonkey.net/
 // @description  try to take over the world!
 // @author       Elias
-// @version      1.1.0
+// @version      1.1.1
 // @downloadURL  https://github.com/elias098/evolve-tooltips/raw/main/main.user.js
 // @match        https://pmotschmann.github.io/Evolve/
 // @grant        none
@@ -1384,9 +1384,12 @@
     }
 
     game.updateDebugData();
-    new MutationObserver(addTooltip).observe(document.getElementById("main"), {
-      childList: true,
-    });
+    new MutationObserver(addTooltipObserver).observe(
+      document.getElementById("main"),
+      {
+        childList: true,
+      }
+    );
   }
 
   function haveTech(research, level = 1) {
@@ -1530,37 +1533,45 @@
     }
   }
 
-  function addTooltip(mutations) {
-    game.updateDebugData();
+  function addTooltipObserver(mutations) {
     mutations.forEach((mutation) =>
       mutation.addedNodes.forEach((node) => {
         if (node.id === "popper") {
-          let dataId = node.dataset.id;
-
-          let match = null;
-          let obj = null;
-          if ((match = dataId.match(/^popArpa([a-z_-]+)\d*$/))) {
-            // "popArpa[id-with-no-tab][quantity]" for projects
-            obj = arpaIds["arpa" + match[1]];
-          } else if ((match = dataId.match(/^q([a-z_-]+)\d*$/))) {
-            // "q[id][order]" for buildings in queue
-            obj = buildingIds[match[1]] || arpaIds[match[1]];
-          } else {
-            // "[id]" for buildings and researches
-            obj = buildingIds[dataId] || techIds[dataId];
-          }
-
-          if (!obj || (obj instanceof Technology && obj.isResearched())) {
-            return;
-          }
-
-          let description = getTooltipInfo(obj);
-          if (description) {
-            node.innerHTML += `<div style="border-top: solid .0625rem #999">${description}</div>`;
-          }
+          addTooltip(node);
+          new MutationObserver((m) => {
+            if (m[0].addedNodes.length === 0) addTooltip(node);
+          }).observe(node, {
+            childList: true,
+          });
         }
       })
     );
+  }
+
+  function addTooltip(node) {
+    let dataId = node.dataset.id;
+
+    let match = null;
+    let obj = null;
+    if ((match = dataId.match(/^popArpa([a-z_-]+)\d*$/))) {
+      // "popArpa[id-with-no-tab][quantity]" for projects
+      obj = arpaIds["arpa" + match[1]];
+    } else if ((match = dataId.match(/^q([a-z_-]+)\d*$/))) {
+      // "q[id][order]" for buildings in queue
+      obj = buildingIds[match[1]] || arpaIds[match[1]];
+    } else {
+      // "[id]" for buildings and researches
+      obj = buildingIds[dataId] || techIds[dataId];
+    }
+
+    if (!obj || (obj instanceof Technology && obj.isResearched())) {
+      return;
+    }
+
+    let description = getTooltipInfo(obj);
+    if (description) {
+      node.innerHTML += `<div style="border-top: solid .0625rem #999">${description}</div>`;
+    }
   }
 
   function getWorldColliderMulti() {
@@ -1615,6 +1626,7 @@
   }
 
   function getTooltipInfo(obj) {
+    game.updateDebugData();
     let notes = [];
     if (obj === buildings.NeutronCitadel) {
       notes.push(
@@ -1657,23 +1669,26 @@
 
       notes.push(`+${Math.round(gain)} Max Knowledge`);
 
-      if (
-        game.global.city.calendar.moon > 0 &&
-        game.global.city.calendar.moon < 7
-      ) {
-        notes.push("Morale");
-      } else if (
-        game.global.city.calendar.moon > 7 &&
-        game.global.city.calendar.moon < 14
-      ) {
-        notes.push("Metal");
-      } else if (
-        game.global.city.calendar.moon > 14 &&
-        game.global.city.calendar.moon < 21
-      ) {
-        notes.push("Knowledge");
-      } else if (game.global.city.calendar.moon > 21) {
-        notes.push("Tax");
+      const moon = game.global.city.calendar.moon;
+      const day = game.global.city.calendar.day;
+      const orbit = game.global.city.calendar.orbit;
+
+      if (moon > 0 && moon < 7) {
+        let date = day + (6 - moon);
+        if (date > orbit) date -= orbit;
+        notes.push(`Morale until day ${date}`);
+      } else if (moon > 7 && moon < 14) {
+        let date = day + (13 - moon);
+        if (date > orbit) date -= orbit;
+        notes.push(`Metal until day ${date}`);
+      } else if (moon > 14 && moon < 21) {
+        let date = day + (20 - moon);
+        if (date > orbit) date -= orbit;
+        notes.push(`Knowledge until day ${date}`);
+      } else if (moon > 21) {
+        let date = day + (27 - moon);
+        if (date > orbit) date -= orbit;
+        notes.push(`Tax until day ${date}`);
       }
     }
 
@@ -2091,18 +2106,24 @@
         gain += buildings.StargateTelemetryBeacon.stateOnCount ** 2 * 25;
       }
 
+      gain *= getWorldColliderMulti();
+
+      notes.push(`+${Math.round(gain)} Max Knowledge`);
+
       // Symposium
       if (haveTech("xeno", 7)) {
+        gain = 0;
+
         gain +=
           300 *
           buildings.GorddonSymposium.stateOnCount *
           (game.actions.galaxy.gxy_gateway.scout_ship.ship.civ +
             game.actions.galaxy.gxy_gateway.scout_ship.ship.mil);
+
+        gain *= getWorldColliderMulti();
+
+        notes.push(`+${Math.round(gain)} Max Knowledge on Gorddon`);
       }
-
-      gain *= getWorldColliderMulti();
-
-      notes.push(`+${Math.round(gain)} Max Knowledge`);
     }
 
     if (obj === buildings.CorvetteShip && haveTech("xeno", 7)) {
@@ -2117,7 +2138,7 @@
 
       gain *= getWorldColliderMulti();
 
-      notes.push(`+${Math.round(gain)} Max Knowledge`);
+      notes.push(`+${Math.round(gain)} Max Knowledge on Gorddon`);
     }
 
     if (obj === buildings.FrigateShip && haveTech("xeno", 7)) {
@@ -2132,7 +2153,7 @@
 
       gain *= getWorldColliderMulti();
 
-      notes.push(`+${Math.round(gain)} Max Knowledge`);
+      notes.push(`+${Math.round(gain)} Max Knowledge on Gorddon`);
     }
 
     if (obj === buildings.CruiserShip && haveTech("xeno", 7)) {
@@ -2147,7 +2168,7 @@
 
       gain *= getWorldColliderMulti();
 
-      notes.push(`+${Math.round(gain)} Max Knowledge`);
+      notes.push(`+${Math.round(gain)} Max Knowledge on Gorddon`);
     }
 
     if (obj === buildings.Dreadnought && haveTech("xeno", 7)) {
@@ -2162,7 +2183,7 @@
 
       gain *= getWorldColliderMulti();
 
-      notes.push(`+${Math.round(gain)} Max Knowledge`);
+      notes.push(`+${Math.round(gain)} Max Knowledge on Gorddon`);
     }
 
     if (obj === buildings.StargateTelemetryBeacon) {
